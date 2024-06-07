@@ -1,6 +1,4 @@
 use yew::prelude::*;
-use yew::function_component;
-use yew::html;
 
 mod components;
 use components::stock_analysis::StockAnalysis;

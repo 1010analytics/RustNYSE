@@ -1,11 +1,11 @@
 use yew::prelude::*;
 use reqwest::Client;
 use serde::Deserialize;
+use wasm_bindgen_futures::spawn_local;
 
 #[derive(Deserialize, Debug, Clone)]
 struct StockData {
     close: Vec<f64>,
-    
 }
 
 #[function_component(StockAnalysis)]
@@ -13,26 +13,19 @@ pub fn stock_analysis() -> Html {
     let data = use_state(|| None);
     let fetching = use_state(|| false);
 
-    {
+    use_effect_with_deps(move |_| {
         let data = data.clone();
         let fetching = fetching.clone();
-        use_effect_with_deps(move |_| {
-            let client = Client::new();
-            wasm_bindgen_futures::spawn_local(async move {
-                fetching.set(true);
-                let response = client.get("https://api.example.com/nyse_stock_data")
-                    .send()
-                    .await
-                    .unwrap()
-                    .json::<StockData>()
-                    .await
-                    .unwrap();
-                data.set(Some(response));
-                fetching.set(false);
-            });
-            || ()
-        }, ());
-    }
+        spawn_local(async move {
+            fetching.set(true);
+            let response = Client::new().get("https://api.example.com/nyse_stock_data")
+                .send().await.unwrap()
+                .json::<StockData>().await.unwrap();
+            data.set(Some(response));
+            fetching.set(false);
+        });
+        || ()
+    }, ());
 
     html! {
         <div>
